@@ -3,115 +3,119 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Bé Trưởng Thành Pro - Sinh Tồn Học Đường</title>
-    <script src="https://prodigygame.com"></script>
+    <title>Bé Trưởng Thành - Bản Ổn Định</title>
+    <!-- Gọi file phaser bạn đã up lên GitHub -->
+    <script src="phaser.min.js"></script>
     <style>
-        body { margin: 0; background: #2c3e50; overflow: hidden; font-family: 'Segoe UI', Arial, sans-serif; touch-action: none; }
-        #ui-layer { position: absolute; top: 10px; left: 10px; background: rgba(0,0,0,0.8); color: white; padding: 12px; border-radius: 12px; border: 2px solid #4ecdc4; pointer-events: none; z-index: 10; font-size: 14px; }
-        /* Bảng câu hỏi trắc nghiệm */
-        #quiz-box { display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 25px; border-radius: 20px; box-shadow: 0 0 100px rgba(0,0,0,0.8); width: 85%; max-width: 400px; text-align: center; z-index: 100; }
-        .ans-btn { width: 100%; padding: 15px; margin: 10px 0; border: none; border-radius: 12px; cursor: pointer; font-weight: bold; font-size: 16px; color: white; }
-        /* Nút di chuyển cho điện thoại */
-        .joy-btn { position: absolute; width: 60px; height: 60px; background: rgba(255,255,255,0.2); border: 2px solid #fff; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 24px; user-select: none; }
+        body { margin: 0; background: #2c3e50; overflow: hidden; font-family: sans-serif; touch-action: none; }
+        #ui { position: absolute; top: 10px; left: 10px; color: white; background: rgba(0,0,0,0.7); padding: 12px; border-radius: 10px; border: 2px solid #4ecdc4; pointer-events: none; z-index: 10; }
+        #quiz-box { display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 20px; border-radius: 15px; width: 80%; max-width: 350px; text-align: center; z-index: 100; border: 5px solid #4ecdc4; }
+        .btn-ans { width: 100%; padding: 12px; margin: 8px 0; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; color: white; }
     </style>
 </head>
 <body>
 
-    <div id="ui-layer">
-        ❤️ HP: <span id="hp">100</span>% | ⚖️ Cân nặng: <span id="weight">20</span>kg<br>
-        🧠 Trí tuệ: <span id="intel">0</span> | 💰 Tiền: <span id="money">50</span>đ
+    <div id="ui">
+        ❤️ HP: <span id="hp">100</span>% | ⚖️ <span id="weight">20</span>kg<br>
+        🧠 Trí tuệ: <span id="intel">0</span>
     </div>
 
     <div id="quiz-box">
-        <h3 id="q-text" style="color: #2c3e50;">Câu hỏi sinh tồn?</h3>
-        <button class="ans-btn" style="background: #3498db;" onclick="checkAns('A')">Đáp án A</button>
-        <button class="ans-btn" style="background: #e67e22;" onclick="checkAns('B')">Đáp án B</button>
+        <h3 id="q-text" style="color: #333;">Câu hỏi?</h3>
+        <button id="btnA" class="btn-ans" style="background: #3498db;" onclick="checkAns('A')"></button>
+        <button id="btnB" class="btn-ans" style="background: #e67e22;" onclick="checkAns('B')"></button>
     </div>
 
-    <!-- Nút bấm di chuyển cho điện thoại (Ẩn trên PC nếu thích) -->
-    <div class="joy-btn" style="bottom: 140px; left: 80px;" onmousedown="move('up')" ontouchstart="move('up')" onmouseup="stop()" ontouchend="stop()">↑</div>
-    <div class="joy-btn" style="bottom: 20px; left: 80px;" onmousedown="move('down')" ontouchstart="move('down')" onmouseup="stop()" ontouchend="stop()">↓</div>
-    <div class="joy-btn" style="bottom: 80px; left: 20px;" onmousedown="move('left')" ontouchstart="move('left')" onmouseup="stop()" ontouchend="stop()">←</div>
-    <div class="joy-btn" style="bottom: 80px; left: 140px;" onmousedown="move('right')" ontouchstart="move('right')" onmouseup="stop()" ontouchend="stop()">→</div>
-
 <script>
-    let stats = { hp: 100, weight: 20, intel: 0, money: 50 };
+    let stats = { hp: 100, weight: 20, intel: 0 };
     let currentQ = null;
-    let player, scene;
-    let moveDir = null;
+    let player, sceneRef;
 
     const questions = [
-        { q: "Có người lạ tặng quà ở cổng trường?", a: "Nhận luôn cho vui", b: "Lịch sự từ chối", c: "B" },
-        { q: "Thấy đám cháy, con làm gì?", a: "Lấy khăn ướt bịt mũi, bò thấp", b: "Chạy vào nhà vệ sinh trốn", c: "A" },
-        { q: "Lạc mất mẹ ở siêu thị?", a: "Chạy ra cửa tìm", b: "Tìm chú bảo vệ/Cô nhân viên", c: "B" }
+        { q: "Người lạ cho kẹo ở trường?", a: "Ăn luôn", b: "Từ chối ngay", c: "B" },
+        { q: "Thấy khói cháy trong nhà?", a: "Bịt mũi, bò thấp", b: "Núp trong tủ", c: "A" },
+        { q: "Bị lạc trong siêu thị?", a: "Chạy ra đường tìm", b: "Tìm chú bảo vệ", c: "B" }
     ];
 
-    const config = {
-        type: Phaser.AUTO, width: window.innerWidth, height: window.innerHeight,
-        backgroundColor: '#34495e', physics: { default: 'arcade' },
-        scene: { create: create, update: update }
-    };
+    window.onload = function() {
+        if (typeof Phaser === 'undefined') {
+            alert("Lỗi: Không tìm thấy phaser.min.js trên GitHub!");
+            return;
+        }
 
-    const game = new Phaser.Game(config);
-
-    function create() {
-        scene = this;
-        // Nhân vật
-        player = this.add.container(window.innerWidth/2, window.innerHeight/2);
-        player.add([this.add.rectangle(0, 10, 40, 50, 0xff6b6b), this.add.circle(0, -25, 20, 0xffccaa)]);
-        this.physics.add.existing(player);
-        player.body.setCollideWorldBounds(true);
-
-        // Vật phẩm
-        const foods = this.physics.add.group(); // Xanh
-        const dangers = this.physics.add.group(); // Đỏ
-        const lessons = this.physics.add.group(); // Vàng
-
-        const spawn = (group, color) => {
-            let item = this.add.circle(Phaser.Math.Between(50, window.innerWidth-50), Phaser.Math.Between(50, window.innerHeight-50), 15, color);
-            group.add(item);
+        const config = {
+            type: Phaser.AUTO,
+            width: window.innerWidth,
+            height: window.innerHeight,
+            backgroundColor: '#34495e',
+            physics: { default: 'arcade' },
+            scene: { create: create, update: update }
         };
 
-        for(let i=0; i<4; i++) spawn(foods, 0x2ecc71);
-        for(let i=0; i<3; i++) spawn(dangers, 0xe74c3c);
-        spawn(lessons, 0xf1c40f);
+        const game = new Phaser.Game(config);
 
-        // Xử lý va chạm
-        this.physics.add.overlap(player, foods, (p, f) => { f.destroy(); stats.hp = Math.min(100, stats.hp+5); updateUI(); spawn(foods, 0x2ecc71); });
-        this.physics.add.overlap(player, dangers, (p, d) => { d.destroy(); stats.hp -= 20; this.cameras.main.shake(100, 0.01); updateUI(); spawn(dangers, 0xe74c3c); });
-        this.physics.add.overlap(player, lessons, (p, l) => { l.destroy(); this.scene.pause(); showQuiz(); });
+        function create() {
+            sceneRef = this;
+            // Nhân vật
+            player = this.add.container(window.innerWidth/2, window.innerHeight/2);
+            player.add([this.add.rectangle(0, 10, 40, 50, 0xff6b6b), this.add.circle(0, -25, 20, 0xffccaa)]);
+            this.physics.add.existing(player);
+            player.body.setCollideWorldBounds(true);
 
-        this.cursors = this.input.keyboard.createCursorKeys();
-    }
+            // Nhóm vật phẩm
+            this.foods = this.physics.add.group();
+            this.dangers = this.physics.add.group();
+            this.lessons = this.physics.add.group();
 
-    function update() {
-        if (!player.body) return;
-        player.body.setVelocity(0);
-        // Điều khiển bằng phím PC
-        if (this.cursors.left.isDown || moveDir === 'left') player.body.setVelocityX(-250);
-        else if (this.cursors.right.isDown || moveDir === 'right') player.body.setVelocityX(250);
-        if (this.cursors.up.isDown || moveDir === 'up') player.body.setVelocityY(-250);
-        else if (this.cursors.down.isDown || moveDir === 'down') player.body.setVelocityY(250);
+            const spawn = (group, color) => {
+                let item = this.add.circle(Phaser.Math.Between(50, window.innerWidth-50), Phaser.Math.Between(50, window.innerHeight-50), 15, color);
+                group.add(item);
+            };
 
-        if (stats.hp <= 0) { alert("Bé cần nghỉ ngơi và ăn uống lành mạnh hơn!"); location.reload(); }
-    }
+            for(let i=0; i<4; i++) spawn(this.foods, 0x2ecc71);
+            for(let i=0; i<3; i++) spawn(this.dangers, 0xe74c3c);
+            spawn(this.lessons, 0xf1c40f);
+
+            // Va chạm
+            this.physics.add.overlap(player, this.foods, (p, f) => { f.destroy(); stats.hp = Math.min(100, stats.hp+5); updateUI(); spawn(this.foods, 0x2ecc71); });
+            this.physics.add.overlap(player, this.dangers, (p, d) => { d.destroy(); stats.hp -= 20; this.cameras.main.shake(100, 0.01); updateUI(); spawn(this.dangers, 0xe74c3c); });
+            this.physics.add.overlap(player, this.lessons, (p, l) => { l.destroy(); this.scene.pause(); showQuiz(); });
+
+            this.cursors = this.input.keyboard.createCursorKeys();
+        }
+
+        function update() {
+            if (!player.body) return;
+            player.body.setVelocity(0);
+            if (this.cursors.left.isDown) player.body.setVelocityX(-250);
+            else if (this.cursors.right.isDown) player.body.setVelocityX(250);
+            if (this.cursors.up.isDown) player.body.setVelocityY(-250);
+            else if (this.cursors.down.isDown) player.body.setVelocityY(250);
+        }
+    };
 
     function showQuiz() {
         currentQ = questions[Math.floor(Math.random() * questions.length)];
         document.getElementById('q-text').innerText = currentQ.q;
-        document.querySelectorAll('.ans-btn')[0].innerText = "A: " + currentQ.a;
-        document.querySelectorAll('.ans-btn')[1].innerText = "B: " + currentQ.b;
+        document.getElementById('btnA').innerText = "A: " + currentQ.a;
+        document.getElementById('btnB').innerText = "B: " + currentQ.b;
         document.getElementById('quiz-box').style.display = 'block';
     }
 
     window.checkAns = function(ans) {
         document.getElementById('quiz-box').style.display = 'none';
-        if (ans === currentQ.c) { alert("Giỏi lắm! +20 Trí tuệ"); stats.intel += 20; }
-        else { alert("Sai rồi! Con cần cẩn thận hơn."); stats.hp -= 20; }
+        if (ans === currentQ.c) { alert("Chính xác! +20 Trí tuệ"); stats.intel += 20; }
+        else { alert("Sai rồi! Bé cần cẩn thận hơn."); stats.hp -= 20; }
         updateUI();
-        let l = scene.add.circle(Phaser.Math.Between(50, 500), Phaser.Math.Between(50, 400), 15, 0xf1c40f);
-        // Trong bản đầy đủ cần add l vào lessons group
-        scene.scene.resume();
+        // Tạo lại hạt vàng sau khi trả lời
+        let x = Math.random() * (window.innerWidth - 100) + 50;
+        let y = Math.random() * (window.innerHeight - 100) + 50;
+        let l = sceneRef.add.circle(x, y, 15, 0xf1c40f);
+        sceneRef.physics.add.existing(l);
+        sceneRef.physics.add.overlap(player, l, () => { l.destroy(); sceneRef.scene.pause(); showQuiz(); });
+        
+        sceneRef.scene.resume();
+        if (stats.hp <= 0) { alert("Bé kiệt sức rồi!"); location.reload(); }
     }
 
     function updateUI() {
@@ -119,10 +123,6 @@
         document.getElementById('weight').innerText = stats.weight;
         document.getElementById('intel').innerText = stats.intel;
     }
-
-    // Hàm điều khiển cho nút di chuyển
-    window.move = (dir) => moveDir = dir;
-    window.stop = () => moveDir = null;
 </script>
 </body>
 </html>
