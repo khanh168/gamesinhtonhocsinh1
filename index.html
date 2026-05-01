@@ -2,73 +2,60 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bé Trưởng Thành - Bản Đồ Họa Sạch</title>
+    <title>Bé Trưởng Thành - Đồ Họa Chuẩn</title>
     <script src="phaser.min.js"></script>
     <style>
-        body { margin: 0; background: radial-gradient(circle, #2ecc71, #27ae60); overflow: hidden; font-family: 'Segoe UI', sans-serif; }
-        #ui { position: absolute; top: 15px; left: 15px; color: white; background: rgba(0,0,0,0.7); padding: 15px; border-radius: 15px; border: 2px solid #f1c40f; z-index: 10; box-shadow: 0 4px 10px rgba(0,0,0,0.3); pointer-events: none; }
-        .stat { font-size: 16px; margin: 3px 0; font-weight: bold; text-shadow: 1px 1px #000; }
+        body { margin: 0; background: #27ae60; overflow: hidden; font-family: 'Segoe UI', sans-serif; }
+        #ui { position: absolute; top: 15px; left: 15px; color: white; background: rgba(0,0,0,0.7); padding: 15px; border-radius: 12px; border: 2px solid #f1c40f; z-index: 10; pointer-events: none; }
         #quiz-box { display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 25px; border-radius: 20px; width: 85%; max-width: 400px; text-align: center; z-index: 100; border: 6px solid #f1c40f; box-shadow: 0 0 100px rgba(0,0,0,0.5); }
-        .ans-btn { width: 100%; padding: 15px; margin: 10px 0; border: none; border-radius: 12px; cursor: pointer; font-weight: bold; color: white; font-size: 16px; transition: 0.2s; }
-        .ans-btn:hover { transform: scale(1.05); }
+        .ans-btn { width: 100%; padding: 15px; margin: 10px 0; border: none; border-radius: 10px; cursor: pointer; font-weight: bold; color: white; font-size: 16px; }
     </style>
 </head>
 <body>
 
     <div id="ui">
-        <div class="stat">❤️ Máu: <span id="hp">100</span>%</div>
-        <div class="stat">⚖️ Cân nặng: <span id="weight">20</span>kg</div>
-        <div class="stat">🧠 Trí tuệ: <span id="intel">0</span></div>
+        <div style="font-size: 18px; font-weight: bold;">❤️ Máu: <span id="hp">100</span>%</div>
+        <div style="font-size: 16px;">⚖️ Cân nặng: <span id="weight">20</span>kg</div>
+        <div style="font-size: 16px;">🧠 Trí tuệ: <span id="intel">0</span></div>
     </div>
 
     <div id="quiz-box">
-        <h3 id="q-text" style="color: #2c3e50; margin-bottom: 20px;">Tình huống khẩn cấp?</h3>
+        <h3 id="q-text" style="color: #2c3e50;">Câu hỏi sinh tồn?</h3>
         <button id="btnA" class="ans-btn" style="background: #3498db;" onclick="handleAns('A')"></button>
         <button id="btnB" class="ans-btn" style="background: #e67e22;" onclick="handleAns('B')"></button>
     </div>
 
 <script>
-    // BỘ ẢNH ĐÃ TÁCH NỀN TRONG SUỐT (TRANSPARENT)
-    const assets = {
-        player: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADIAAAA8CAYAAAABy6C3AAAACXBIWXMAAAsTAAALEwEAmpwYAAACp0lEQVRoBe2ZzVHDMBDF77SADtIB6AA6gA6gA+ggpAOUAegAOkg6SBpIB6ADvHfmrUayI9uSJSfGmfGj0Uqy9P7uS7Iky6Ypxt9ru97RDU7wWbX+LDre6gFv8AFf6z+rO+w/HlXmXfjtK/AOPvAIn8L6E/uLuUfRfhS7fwGP4B0egD9AvV3qV2JvEbeXsc8Y8AX8wCv4A7zbpX4l9hZxe6m69xnrbcVvU3G6id9FfBfxfVTdneq+Vf9txG8rXqvK0038LuK7iO8X1W2p7l79txGvVfVpU3m6id9FfBfxfVbdlur+V/8txW9VfVpU3m6id9FfBfxfVbdluvfVe8G8G9pvaN6lvp78VvV/99fE76L69Kg+38TvIr6L6C6q21LdnfofR7w9867MuzLvyrxr/Vv9r8T3qvxv9T9F83YUn6L4FMU/RfN2vP4fRPP2vP4n0bwv638Wzfux/m/RvC/v/w7N+6v+f9G8v+r/F837u/4P0bwH9R9H8x7VfxzN+7v+Y2jer/UfRfN+rv8Imvel/s9o3pf6D6N5P+r/iOZ9qf9TNO/X+o+ieb/XfxTN+7v+92jex/o/o3kf6v8XzftU/0E071v9A77u8R6/j8L6NfS7Uu9O/S8vX6v+U/6v6v+s/pP+Uf5YmfcI9S78T+AdfOARPoX1J/YXc4+i/Sh2/wIewTv8AH+AervUr8TeIm4vY58x4Av4gVfwB3i3S/1K7C3i9lJ17zPW24rfpuJ0E7+L+C7i+6i6O9V9q/7biNdq+L1W+T6p/O9T/vep/PvS9T9m/+Xf7v7vLv+fBfP+mv8D8+5o/oH5VfV/Nf+Beb/W/8B8f9f/wXwP1/8H5vun/g/M92X9H5ivqf4PzNdU/wfm67r+D8z3T/0fmK+r/h3zNdW/Y76m+nfM93X9H5iv6/r/mPdH/R+Y96f+D8z7Uv8X3f7I2K3yVf4L807N26n+Uf5S+SjK93D5T+Tf6j/pH/S9Xv8Gf9pS5v9K88YAAAAASUVORK5CYII=',
-        apple: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAAABGdBTUEAALGPC/xhBQAAACBjSFJNAAB6JgAAgIQAAPoAAACA6AAAdTAAAOpgAAA6mAAAF3CculE8AAAACXBIWXMAAAsTAAALEwEAmpwYAAABMElEQVRIDWNgGAWjYBSMAtIAIxD/B+IvUPkfCpgY8AGofBaofA8ofx4og2pC8S9Q+S9Q+RwYPwPio9X9p+pI8hIofwpUR9KRpEBZ0gIl6UfSkaRDWVIBZckP1JF0SIs6pIKGpFMaUmIDWkgH9EgHHmkiDWhSArRIR5pIB0ZIB+mRTgxIB/YkAnuSNpKB/UhK+idpIxlIIDnoE8k98YEkDqSAlMBfUnviBykcSAn8JR0kYpDEgZTAH9IhowNInKQF/pAOmRZIYpE68Id0yAxHFpM68Id0yGxXFpM68Id0yOywZDGpA39Ih8wNZTHSAn9Ih8wN9EASL9IDf0iHzAtM90gL/CEdMj8w3CMt8Id0yIJAdY+0wB/SIQsDAzzSAn9Ih2yAn7pHTv6YBeQAAOaU6N9/l8q3AAAAAElFTkSuQmCC',
-        junk: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAAACXBIWXMAAAsTAAALEwEAmpwYAAABJUlEQVRIDWNgGAWjYBSMAtIAIxD/B+IvUPkfCpgY8AGofBaofA8ofx4og2pC8S9Q+S9Q+RwYPwPio9X9p+pI8hIofwpUR9KRpEBZ0gIl6UfSkaRDWVIBZckP1JF0SIs6pIKGpFMaUmIDWkgH9EgHHmkiDWhSArRIR5pIB0ZIB+mRTgxIB/YkAnuSNpKB/UhK+idpIxlIIDnoE8k98YEkDqSAlMBfUnviBykcSAn8JR0kYpDEgZTAH9IhowNInKQF/pAOmRZIYpE68Id0yAxHFpM68Id0yGxXFpM68Id0yOywZDGpA39Ih8wNZTHSAn9Ih8wN9EASL9IDf0iHzAtM90gL/CEdMj8w3CMt8Id0yIJAdY+0wB/SIQsDAzzSAn9Ih2yAn7pHTv6YBeQAAIl6Y69/ntqNAAAAAElFTkSuQmCC',
-        book: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAAACXBIWXMAAAsTAAALEwEAmpwYAAABJElEQVRIDWNgGAWjYBSMAtIAIxD/B+IvUPkfCpgY8AGofBaofA8ofx4og2pC8S9Q+S9Q+RwYPwPio9X9p+pI8hIofwpUR9KRpEBZ0gIl6UfSkaRDWVIBZckP1JF0SIs6pIKGpFMaUmIDWkgH9EgHHmkiDWhSArRIR5pIB0ZIB+mRTgxIB/YkAnuSNpKB/UhK+idpIxlIIDnoE8k98YEkDqSAlMBfUnviBykcSAn8JR0kYpDEgZTAH9IhowNInKQF/pAOmRZIYpE68Id0yAxHFpM68Id0yGxXFpM68Id0yOywZDGpA39Ih8wNZTHSAn9Ih8wN9EASL9IDf0iHzAtM90gL/CEdMj8w3CMt8Id0yIJAdY+0wB/SIQsDAzzSAn9Ih2yAn7pHTv6YBeQAAIl6Y69/ntqNAAAAAElFTkSuQmCC'
-    };
-
-    let stats = { hp: 100, weight: 20, intel: 0 };
-    let currentQuiz = null;
-    const questions = [
-        { q: "Có người lạ cho kẹo ở cổng trường?", a: "Nhận kẹo ngay", b: "Từ chối, đi chỗ khác", c: "B" },
-        { q: "Thấy khói cháy trong nhà con làm gì?", a: "Bịt mũi, bò thấp xuống", b: "Núp vào gầm giường", c: "A" }
-    ];
-
     const config = {
-        type: Phaser.AUTO, width: window.innerWidth, height: window.innerHeight,
-        backgroundColor: '#2ecc71', physics: { default: 'arcade' },
+        type: Phaser.AUTO,
+        width: window.innerWidth,
+        height: window.innerHeight,
+        backgroundColor: '#2ecc71',
+        physics: { default: 'arcade' },
         scene: { preload: preload, create: create, update: update }
     };
 
     let player, cursors, foods, dangers, lessons;
+    let stats = { hp: 100, weight: 20, intel: 0 };
     const game = new Phaser.Game(config);
 
     function preload() {
-        this.load.image('player', assets.player);
-        this.load.image('apple', assets.apple);
-        this.load.image('junk', assets.junk);
-        this.load.image('book', assets.book);
+        // Gọi ảnh từ file mày đã up lên GitHub
+        this.load.image('player', 'player.png');
+        this.load.image('apple', 'apple.png');
+        this.load.image('junk', 'junk.png');
+        this.load.image('book', 'book.png');
     }
 
     function create() {
         window.gameScene = this;
-        // Vẽ thêm hoa cỏ rải rác trên thảm cỏ
-        for (let i = 0; i < 30; i++) {
-            this.add.circle(Math.random()*window.innerWidth, Math.random()*window.innerHeight, 2, 0xffffff, 0.4);
+        // Thêm thảm cỏ
+        for (let i = 0; i < 40; i++) {
+            this.add.circle(Math.random()*window.innerWidth, Math.random()*window.innerHeight, 2, 0xffffff, 0.3);
         }
 
         player = this.physics.add.sprite(window.innerWidth/2, window.innerHeight/2, 'player');
-        player.setCollideWorldBounds(true).setScale(1.2);
+        player.setCollideWorldBounds(true).setScale(0.5); // Chỉnh lại kích thước cho vừa
 
         foods = this.physics.add.group();
         dangers = this.physics.add.group();
@@ -76,6 +63,7 @@
 
         const spawn = (group, key) => {
             let item = this.physics.add.sprite(Phaser.Math.Between(50, window.innerWidth-50), Phaser.Math.Between(50, window.innerHeight-50), key);
+            item.setScale(0.1); // Vì ảnh táo/gà thường to, ta thu nhỏ lại 0.1
             group.add(item);
         };
 
@@ -105,20 +93,27 @@
         document.getElementById('intel').innerText = stats.intel;
     }
 
+    const questions = [
+        { q: "Có người lạ cho kẹo ở trường?", a: "Nhận kẹo ngay", b: "Từ chối, đi chỗ khác", c: "B" },
+        { q: "Thấy khói cháy trong nhà?", a: "Bịt mũi, bò thấp", b: "Núp vào gầm giường", c: "A" }
+    ];
+
     function showQuiz() {
-        currentQuiz = questions[Math.floor(Math.random() * questions.length)];
-        document.getElementById('q-text').innerText = currentQuiz.q;
-        document.getElementById('btnA').innerText = "A: " + currentQuiz.a;
-        document.getElementById('btnB').innerText = "B: " + currentQuiz.b;
+        let q = questions[Math.floor(Math.random() * questions.length)];
+        window.currentQ = q;
+        document.getElementById('q-text').innerText = q.q;
+        document.getElementById('btnA').innerText = "A: " + q.a;
+        document.getElementById('btnB').innerText = "B: " + q.b;
         document.getElementById('quiz-box').style.display = 'block';
     }
 
     window.handleAns = function(ans) {
         document.getElementById('quiz-box').style.display = 'none';
-        if (ans === currentQuiz.c) { alert("🌟 Bé giỏi quá! +20 Trí tuệ."); stats.intel += 20; }
-        else { alert("❌ Nguy hiểm quá! Bé bị trừ máu rồi."); stats.hp -= 20; }
+        if (ans === window.currentQ.c) { alert("🌟 Bé giỏi quá! +20 Trí tuệ."); stats.intel += 20; }
+        else { alert("❌ Nguy hiểm lắm! Bé bị trừ máu."); stats.hp -= 20; }
         updateUI();
         let l = window.gameScene.physics.add.sprite(Phaser.Math.Between(50, window.innerWidth-50), Phaser.Math.Between(50, window.innerHeight-50), 'book');
+        l.setScale(0.1);
         lessons.add(l);
         window.gameScene.scene.resume();
         if (stats.hp <= 0) { alert("Bé kiệt sức rồi!"); location.reload(); }
