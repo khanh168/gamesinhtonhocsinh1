@@ -63,7 +63,13 @@
 
         const spawn = (group, key) => {
             let item = this.physics.add.sprite(Phaser.Math.Between(50, window.innerWidth-50), Phaser.Math.Between(50, window.innerHeight-50), key);
-            item.setScale(0.1); // Vì ảnh táo/gà thường to, ta thu nhỏ lại 0.1
+            
+            // TÙY CHỈNH KÍCH THƯỚC TỪNG LOẠI Ở ĐÂY
+            if (key === 'player') item.setScale(0.5);   // Nhân vật
+            if (key === 'apple') item.setScale(0.3);    // Táo (To hơn)
+            if (key === 'junk') item.setScale(0.4);     // Đùi gà (To rõ ràng)
+            if (key === 'book') item.setScale(0.3);     // Sách (Dễ nhìn)
+            
             group.add(item);
         };
 
