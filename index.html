@@ -3,38 +3,54 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Bé Trưởng Thành - Chơi Trên Điện Thoại</title>
+    <title>Bé Trưởng Thành - Hành Trình Sân Trường</title>
     <script src="phaser.min.js"></script>
     <style>
-        body { margin: 0; background: #27ae60; overflow: hidden; font-family: 'Segoe UI', sans-serif; touch-action: none; }
-        #ui { position: absolute; top: 10px; left: 10px; color: white; background: rgba(0,0,0,0.7); padding: 12px; border-radius: 12px; border: 2px solid #f1c40f; z-index: 10; pointer-events: none; font-size: 14px; }
-        #quiz-box { display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 25px; border-radius: 20px; width: 85%; max-width: 400px; text-align: center; z-index: 100; border: 6px solid #f1c40f; }
-        .ans-btn { width: 100%; padding: 15px; margin: 10px 0; border: none; border-radius: 10px; cursor: pointer; font-weight: bold; color: white; font-size: 16px; }
+        body { margin: 0; background: #000; overflow: hidden; font-family: 'Segoe UI', sans-serif; touch-action: none; }
         
-        /* Nút di chuyển cho điện thoại */
-        .controller { position: absolute; bottom: 20px; left: 20px; display: grid; grid-template-columns: 60px 60px 60px; grid-template-rows: 60px 60px; gap: 10px; z-index: 20; }
-        .joy-btn { width: 60px; height: 60px; background: rgba(255,255,255,0.3); border: 2px solid #fff; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 24px; font-weight: bold; user-select: none; }
-        .joy-btn:active { background: rgba(255,255,255,0.6); }
+        /* Giao diện UI kiểu hiện đại */
+        #status-bar {
+            position: absolute; top: 10px; left: 50%; transform: translateX(-50%);
+            width: 90%; max-width: 500px; background: rgba(255, 255, 255, 0.9);
+            padding: 10px 20px; border-radius: 50px; display: flex; justify-content: space-between;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3); border: 3px solid #4ecdc4; z-index: 10;
+        }
+        .stat-box { text-align: center; color: #333; font-weight: bold; font-size: 14px; }
+        .stat-val { color: #ff6b6b; font-size: 18px; display: block; }
+
+        /* Bảng câu hỏi kiểu hoạt hình */
+        #quiz-box {
+            display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            background: #fff; padding: 30px; border-radius: 30px; border: 8px solid #f1c40f;
+            width: 85%; max-width: 400px; text-align: center; z-index: 100;
+        }
+        .ans-btn { 
+            width: 100%; padding: 15px; margin: 10px 0; border: none; border-radius: 15px; 
+            cursor: pointer; font-weight: bold; color: white; font-size: 16px; transition: 0.2s;
+        }
+
+        /* Cụm nút di chuyển Mobile tinh tế hơn */
+        .controller { position: absolute; bottom: 30px; right: 30px; display: grid; grid-template-columns: 70px 70px 70px; gap: 10px; z-index: 20; opacity: 0.6; }
+        .joy-btn { width: 70px; height: 70px; background: #fff; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 30px; color: #333; box-shadow: 0 4px 0 #ccc; }
     </style>
 </head>
 <body>
 
-    <div id="ui">
-        <b>❤️ Máu: <span id="hp">100</span>%</b> | <b>⚖️ Cân nặng: <span id="weight">20</span>kg</b><br>
-        <b>🧠 Trí tuệ: <span id="intel">0</span></b>
+    <div id="status-bar">
+        <div class="stat-box">❤️ SỨC KHỎE <span id="hp" class="stat-val">100</span></div>
+        <div class="stat-box">⚖️ CÂN NẶNG <span id="weight" class="stat-val">20</span></div>
+        <div class="stat-box">🧠 TRÍ TUỆ <span id="intel" class="stat-val">0</span></div>
     </div>
 
     <div id="quiz-box">
-        <h3 id="q-text" style="color: #2c3e50;">?</h3>
+        <h2 id="q-text" style="color: #2c3e50; margin-top: 0;">THỬ THÁCH!</h2>
+        <p id="q-desc" style="font-size: 18px; color: #555;">Câu hỏi sinh tồn?</p>
         <button id="btnA" class="ans-btn" style="background: #3498db;" onclick="handleAns('A')"></button>
         <button id="btnB" class="ans-btn" style="background: #e67e22;" onclick="handleAns('B')"></button>
     </div>
 
-    <!-- Cụm nút di chuyển -->
     <div class="controller">
-        <div></div>
-        <div class="joy-btn" onpointerdown="move('up')" onpointerup="stop()">↑</div>
-        <div></div>
+        <div></div><div class="joy-btn" onpointerdown="move('up')" onpointerup="stop()">↑</div><div></div>
         <div class="joy-btn" onpointerdown="move('left')" onpointerup="stop()">←</div>
         <div class="joy-btn" onpointerdown="move('down')" onpointerup="stop()">↓</div>
         <div class="joy-btn" onpointerdown="move('right')" onpointerup="stop()">→</div>
@@ -49,7 +65,6 @@
         type: Phaser.AUTO,
         width: window.innerWidth,
         height: window.innerHeight,
-        backgroundColor: '#2ecc71',
         physics: { default: 'arcade' },
         scene: { preload: preload, create: create, update: update }
     };
@@ -57,6 +72,8 @@
     const game = new Phaser.Game(config);
 
     function preload() {
+        // Load các tài nguyên mày đã up lên GitHub
+        this.load.image('bg', 'background.png');
         this.load.image('player', 'player.png');
         this.load.image('apple', 'apple.png');
         this.load.image('junk', 'junk.png');
@@ -65,25 +82,36 @@
 
     function create() {
         scene = this;
-        player = this.physics.add.sprite(window.innerWidth/2, window.innerHeight/2, 'player');
-        player.setCollideWorldBounds(true).setScale(0.4);
 
+        // 1. Thêm nền Sân Trường (Co giãn vừa màn hình)
+        let bg = this.add.image(window.innerWidth/2, window.innerHeight/2, 'bg');
+        let scaleX = window.innerWidth / bg.width;
+        let scaleY = window.innerHeight / bg.height;
+        let scale = Math.max(scaleX, scaleY);
+        bg.setScale(scale).setScrollFactor(0);
+
+        // 2. Nhân vật chính
+        player = this.physics.add.sprite(window.innerWidth/2, window.innerHeight/2, 'player');
+        player.setCollideWorldBounds(true).setScale(0.5).setDepth(5);
+
+        // 3. Các vật phẩm
         const foods = this.physics.add.group();
         const dangers = this.physics.add.group();
         const lessons = this.physics.add.group();
 
         const spawn = (group, key, scale) => {
-            let item = this.physics.add.sprite(Phaser.Math.Between(50, window.innerWidth-50), Phaser.Math.Between(50, window.innerHeight-50), key);
-            item.setScale(scale);
+            let item = this.physics.add.sprite(Phaser.Math.Between(100, window.innerWidth-100), Phaser.Math.Between(150, window.innerHeight-100), key);
+            item.setScale(scale).setDepth(4);
             group.add(item);
         };
 
-        for(let i=0; i<3; i++) spawn(foods, 'apple', 0.3);
-        for(let i=0; i<2; i++) spawn(dangers, 'junk', 0.5);
-        spawn(lessons, 'book', 0.3);
+        for(let i=0; i<3; i++) spawn(foods, 'apple', 0.4);
+        for(let i=0; i<2; i++) spawn(dangers, 'junk', 0.6);
+        spawn(lessons, 'book', 0.4);
 
-        this.physics.add.overlap(player, foods, (p, f) => { f.destroy(); stats.hp = Math.min(100, stats.hp+5); updateUI(); spawn(foods, 'apple', 0.3); });
-        this.physics.add.overlap(player, dangers, (p, d) => { d.destroy(); stats.hp -= 20; this.cameras.main.shake(100, 0.01); updateUI(); spawn(dangers, 'junk', 0.5); });
+        // Va chạm
+        this.physics.add.overlap(player, foods, (p, f) => { f.destroy(); stats.hp = Math.min(100, stats.hp+5); updateUI(); spawn(foods, 'apple', 0.4); });
+        this.physics.add.overlap(player, dangers, (p, d) => { d.destroy(); stats.hp -= 20; this.cameras.main.shake(150, 0.01); updateUI(); spawn(dangers, 'junk', 0.6); });
         this.physics.add.overlap(player, lessons, (p, l) => { l.destroy(); this.scene.pause(); showQuiz(); });
 
         this.cursors = this.input.keyboard.createCursorKeys();
@@ -93,7 +121,6 @@
         if (!player.body) return;
         player.body.setVelocity(0);
 
-        // Kết hợp phím PC và nút Mobile
         if (this.cursors.left.isDown || moveDir === 'left') { player.setVelocityX(-250); player.setFlipX(true); }
         else if (this.cursors.right.isDown || moveDir === 'right') { player.setVelocityX(250); player.setFlipX(false); }
         
@@ -101,7 +128,6 @@
         else if (this.cursors.down.isDown || moveDir === 'down') player.setVelocityY(250);
     }
 
-    // Hàm cho nút bấm Mobile
     window.move = (dir) => moveDir = dir;
     window.stop = () => moveDir = null;
 
@@ -111,28 +137,24 @@
         document.getElementById('intel').innerText = stats.intel;
     }
 
-    // Logic câu hỏi
     const questions = [
-        { q: "Có người lạ cho kẹo ở cổng trường?", a: "Nhận kẹo ngay", b: "Từ chối, đi chỗ khác", c: "B" },
-        { q: "Thấy khói cháy trong nhà?", a: "Bịt mũi, bò thấp", b: "Núp trong gầm giường", c: "A" }
+        { q: "Có khói bốc lên trong bếp, con làm gì?", a: "Bịt mũi, bò thấp xuống đất", b: "Chạy vào tủ quần áo trốn", c: "A" },
+        { q: "Người lạ bảo bố mẹ gặp nạn, đòi đón con?", a: "Đi theo luôn", b: "Vào trường tìm cô giáo", c: "B" }
     ];
 
     function showQuiz() {
         window.currentQ = questions[Math.floor(Math.random() * questions.length)];
-        document.getElementById('q-text').innerText = window.currentQ.q;
-        document.getElementById('btnA').innerText = "A: " + window.currentQ.a;
-        document.getElementById('btnB').innerText = "B: " + window.currentQ.b;
+        document.getElementById('q-desc').innerText = window.currentQ.q;
+        document.getElementById('btnA').innerText = window.currentQ.a;
+        document.getElementById('btnB').innerText = window.currentQ.b;
         document.getElementById('quiz-box').style.display = 'block';
     }
 
     window.handleAns = function(ans) {
         document.getElementById('quiz-box').style.display = 'none';
-        if (ans === window.currentQ.c) { alert("Giỏi quá! +20 Trí tuệ"); stats.intel += 20; }
-        else { alert("Sai rồi! Bé mất 20 máu"); stats.hp -= 20; }
+        if (ans === window.currentQ.c) { alert("🌟 XUẤT SẮC! +20 Trí tuệ"); stats.intel += 20; }
+        else { alert("❌ NGUY HIỂM! Bé mất 20 máu"); stats.hp -= 20; }
         updateUI();
-        let l = scene.physics.add.sprite(Phaser.Math.Between(50, window.innerWidth-50), Phaser.Math.Between(50, window.innerHeight-50), 'book');
-        l.setScale(0.3);
-        // Trong bản hoàn thiện sẽ thêm lại vào group lessons ở đây
         scene.scene.resume();
         if (stats.hp <= 0) { alert("Bé kiệt sức rồi!"); location.reload(); }
     };
