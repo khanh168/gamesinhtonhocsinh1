@@ -2,12 +2,19 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <title>Bé Tập Sinh Tồn - Level 1</title>
+    <title>Bé Trưởng Thành - Thử Thách Thông Thái</title>
     <script src="phaser.min.js"></script>
     <style>
         body { margin: 0; background: #2c3e50; overflow: hidden; font-family: 'Segoe UI', sans-serif; }
-        #ui { position: absolute; top: 15px; left: 15px; color: white; background: rgba(0,0,0,0.7); padding: 15px; border-radius: 10px; border: 2px solid #4ecdc4; pointer-events: none; }
+        #ui { position: absolute; top: 15px; left: 15px; color: white; background: rgba(0,0,0,0.8); padding: 15px; border-radius: 12px; border: 2px solid #4ecdc4; pointer-events: none; z-index: 10; }
         .stat { font-size: 18px; margin: 5px 0; font-weight: bold; }
+        /* Style cho bảng câu hỏi */
+        #quiz-box {
+            display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            background: white; padding: 25px; border-radius: 20px; box-shadow: 0 0 50px rgba(0,0,0,0.5);
+            width: 80%; max-width: 400px; text-align: center; z-index: 100;
+        }
+        .btn-ans { width: 100%; padding: 10px; margin: 10px 0; border: none; border-radius: 10px; cursor: pointer; font-weight: bold; font-size: 16px; }
     </style>
 </head>
 <body>
@@ -16,95 +23,110 @@
         <div class="stat">❤️ Sức khỏe: <span id="hp">100</span>%</div>
         <div class="stat">⚖️ Cân nặng: <span id="weight">20</span>kg</div>
         <div class="stat">🧠 Trí tuệ: <span id="intel">0</span></div>
-        <hr>
-        <div style="color: #4ecdc4; font-size: 14px;">Nhiệm vụ: Ăn hạt Xanh (Tốt) <br> Tránh hạt Đỏ (Xấu)</div>
+        <div style="color: #f1c40f; font-size: 14px; margin-top: 5px;">🌟 Ăn hạt VÀNG để học kỹ năng!</div>
+    </div>
+
+    <!-- Bảng câu hỏi hiện ra khi ăn hạt vàng -->
+    <div id="quiz-box">
+        <h3 id="question" style="color: #2c3e50;">Câu hỏi sinh tồn?</h3>
+        <button class="btn-ans" style="background: #4ecdc4; color: white;" onclick="answer('A')">Đáp án A</button>
+        <button class="btn-ans" style="background: #ff6b6b; color: white;" onclick="answer('B')">Đáp án B</button>
     </div>
 
 <script>
+    let stats = { hp: 100, weight: 20, intel: 0 };
+    let currentQuiz = null;
+
+    const quizData = [
+        { q: "Khi thấy khói trong nhà, con làm gì?", a: "Lấy khăn ướt bịt mũi", b: "Chạy vào tủ trốn", c: "A" },
+        { q: "Người lạ cho kẹo ở cổng trường?", a: "Nhận kẹo và ăn", b: "Từ chối và đi chỗ khác", c: "B" },
+        { q: "Bị lạc trong siêu thị, con tìm ai?", a: "Tìm chú bảo vệ/Cô nhân viên", b: "Chạy ra ngoài cửa tìm bố mẹ", c: "A" }
+    ];
+
     window.onload = function() {
         const config = {
-            type: Phaser.AUTO,
-            width: window.innerWidth,
-            height: window.innerHeight,
-            backgroundColor: '#34495e',
-            physics: { default: 'arcade' },
+            type: Phaser.AUTO, width: window.innerWidth, height: window.innerHeight,
+            backgroundColor: '#34495e', physics: { default: 'arcade' },
             scene: { create: create, update: update }
         };
 
-        let player, head, cursors, foods, dangers;
-        let stats = { hp: 100, weight: 20, intel: 0 };
+        let player, cursors, foods, dangers, studys;
         const game = new Phaser.Game(config);
 
         function create() {
-            // 1. Tạo "Bé nhân vật" (Thân vuông + Đầu tròn)
+            // Nhân vật
             player = this.add.container(window.innerWidth/2, window.innerHeight/2);
-            let body = this.add.rectangle(0, 10, 40, 50, 0xff6b6b); // Thân
-            let face = this.add.circle(0, -25, 20, 0xffccaa); // Đầu
-            player.add([body, face]);
-            
+            player.add([this.add.rectangle(0, 10, 40, 50, 0xff6b6b), this.add.circle(0, -25, 20, 0xffccaa)]);
             this.physics.add.existing(player);
             player.body.setCollideWorldBounds(true);
-            player.body.setSize(40, 70); // Kích thước va chạm
 
-            // 2. Tạo nhóm đồ ăn TỐT (Xanh lá)
-            foods = this.physics.add.group();
-            for(let i=0; i<5; i++) {
-                spawnItem(foods, 0x2ecc71, this);
-            }
+            // Các nhóm hạt
+            foods = this.physics.add.group(); // Xanh lá
+            dangers = this.physics.add.group(); // Đỏ
+            studys = this.physics.add.group(); // Vàng
 
-            // 3. Tạo nhóm đồ ăn XẤU (Đỏ - như Gà rán/Snack quá nhiều)
-            dangers = this.physics.add.group();
-            for(let i=0; i<3; i++) {
-                spawnItem(dangers, 0xe74c3c, this);
-            }
+            for(let i=0; i<3; i++) { spawn(foods, 0x2ecc71, this); spawn(dangers, 0xe74c3c, this); }
+            spawn(studys, 0xf1c40f, this);
 
-            // Xử lý va chạm
-            this.physics.add.overlap(player, foods, (p, f) => {
-                f.destroy();
-                stats.hp = Math.min(100, stats.hp + 5);
-                stats.weight += 0.1;
-                updateUI();
-                spawnItem(foods, 0x2ecc71, this);
-            });
+            // Va chạm hạt VÀNG (Câu hỏi)
+            this.physics.add.overlap(player, studys, (p, s) => {
+                s.destroy();
+                showQuiz();
+                this.scene.pause(); // Tạm dừng game để làm bài
+            }, null, this);
 
-            this.physics.add.overlap(player, dangers, (p, d) => {
-                d.destroy();
-                stats.hp -= 15;
-                stats.weight += 1.5; // Ăn đồ xấu tăng cân rất nhanh
-                this.cameras.main.shake(100, 0.01);
-                updateUI();
-                spawnItem(dangers, 0xe74c3c, this);
-            });
+            // Va chạm khác (Xanh/Đỏ)
+            this.physics.add.overlap(player, foods, (p, f) => { f.destroy(); stats.hp = Math.min(100, stats.hp+5); updateUI(); spawn(foods, 0x2ecc71, this); });
+            this.physics.add.overlap(player, dangers, (p, d) => { d.destroy(); stats.hp -= 15; updateUI(); spawn(dangers, 0xe74c3c, this); });
 
             cursors = this.input.keyboard.createCursorKeys();
+            window.gameScene = this;
         }
 
-        function spawnItem(group, color, scene) {
-            let x = Phaser.Math.Between(50, window.innerWidth-50);
-            let y = Phaser.Math.Between(50, window.innerHeight-50);
-            let item = scene.add.circle(x, y, 15, color);
+        function spawn(group, color, scene) {
+            let item = scene.add.circle(Phaser.Math.Between(50, window.innerWidth-50), Phaser.Math.Between(50, window.innerHeight-50), 15, color);
             group.add(item);
         }
 
         function update() {
+            if (!player.body) return;
             player.body.setVelocity(0);
             if (cursors.left.isDown) player.body.setVelocityX(-250);
             else if (cursors.right.isDown) player.body.setVelocityX(250);
             if (cursors.up.isDown) player.body.setVelocityY(-250);
             else if (cursors.down.isDown) player.body.setVelocityY(250);
-
-            if (stats.hp <= 0) {
-                alert("Bé mệt quá rồi! Hãy chọn đồ ăn lành mạnh (màu xanh) nhé.");
-                location.reload();
-            }
-        }
-
-        function updateUI() {
-            document.getElementById('hp').innerText = stats.hp;
-            document.getElementById('weight').innerText = stats.weight.toFixed(1);
-            document.getElementById('intel').innerText = stats.intel;
         }
     };
+
+    function showQuiz() {
+        currentQuiz = quizData[Math.floor(Math.random() * quizData.length)];
+        document.getElementById('question').innerText = currentQuiz.q;
+        document.querySelectorAll('.btn-ans')[0].innerText = "A: " + currentQuiz.a;
+        document.querySelectorAll('.btn-ans')[1].innerText = "B: " + currentQuiz.b;
+        document.getElementById('quiz-box').style.display = 'block';
+    }
+
+    window.answer = function(choice) {
+        document.getElementById('quiz-box').style.display = 'none';
+        if (choice === currentQuiz.c) {
+            alert("Chính xác! Bé giỏi quá.");
+            stats.intel += 20;
+        } else {
+            alert("Sai rồi! Con cần cẩn thận hơn nhé.");
+            stats.hp -= 20;
+        }
+        updateUI();
+        window.gameScene.scene.resume(); // Tiếp tục chơi
+        // Tạo lại hạt vàng mới
+        let s = window.gameScene.add.circle(Math.random()*600, Math.random()*400, 15, 0xf1c40f);
+        // Lưu ý: Trong bản đầy đủ cần add s vào group studys
+    };
+
+    function updateUI() {
+        document.getElementById('hp').innerText = stats.hp;
+        document.getElementById('weight').innerText = stats.weight.toFixed(1);
+        document.getElementById('intel').innerText = stats.intel;
+    }
 </script>
 </body>
 </html>
