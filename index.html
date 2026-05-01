@@ -2,15 +2,13 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bé Tập Sinh Tồn - Final Fix</title>
-    <!-- Gọi file phaser nội bộ của bạn -->
+    <title>Bé Tập Sinh Tồn - Đồ Họa Thực Tế</title>
     <script src="phaser.min.js"></script>
     <style>
-        body { margin: 0; background: #2c3e50; overflow: hidden; font-family: sans-serif; }
-        #ui { position: absolute; top: 10px; left: 10px; color: white; background: rgba(0,0,0,0.7); padding: 12px; border-radius: 10px; border: 2px solid #4ecdc4; z-index: 10; pointer-events: none; }
-        #quiz-box { display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 20px; border-radius: 15px; width: 85%; max-width: 350px; text-align: center; z-index: 100; border: 4px solid #4ecdc4; }
-        .ans-btn { width: 100%; padding: 12px; margin: 8px 0; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; color: white; }
+        body { margin: 0; background: #2c3e50; overflow: hidden; font-family: 'Segoe UI', sans-serif; }
+        #ui { position: absolute; top: 10px; left: 10px; color: white; background: rgba(0,0,0,0.8); padding: 15px; border-radius: 15px; border: 2px solid #4ecdc4; z-index: 10; pointer-events: none; }
+        #quiz-box { display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 25px; border-radius: 20px; width: 80%; max-width: 400px; text-align: center; z-index: 100; border: 5px solid #4ecdc4; }
+        .ans-btn { width: 100%; padding: 15px; margin: 10px 0; border: none; border-radius: 12px; cursor: pointer; font-weight: bold; color: white; font-size: 16px; }
     </style>
 </head>
 <body>
@@ -21,81 +19,73 @@
     </div>
 
     <div id="quiz-box">
-        <h3 id="q-text" style="color: #333;">Câu hỏi sinh tồn?</h3>
+        <h3 id="q-text" style="color: #333;">Tình huống sinh tồn?</h3>
         <button id="btnA" class="ans-btn" style="background: #3498db;" onclick="handleAns('A')"></button>
         <button id="btnB" class="ans-btn" style="background: #e67e22;" onclick="handleAns('B')"></button>
     </div>
 
 <script>
-    // --- DỮ LIỆU GAME ---
     let stats = { hp: 100, weight: 20, intel: 0 };
     let currentQuiz = null;
     const questions = [
-        { q: "Có người lạ cho kẹo ở cổng trường?", a: "Nhận kẹo ngay", b: "Từ chối, đi chỗ khác", c: "B" },
-        { q: "Thấy khói cháy trong nhà con làm gì?", a: "Bịt mũi, bò thấp xuống", b: "Núp vào gầm giường", c: "A" },
-        { q: "Đi lạc trong siêu thị con tìm ai?", a: "Chạy ra đường tìm mẹ", b: "Tìm chú bảo vệ/nhân viên", c: "B" }
+        { q: "Có người lạ cho kẹo ở trường?", a: "Nhận kẹo ngay", b: "Từ chối, đi chỗ khác", c: "B" },
+        { q: "Thấy khói cháy trong nhà?", a: "Bịt mũi, bò thấp", b: "Núp vào gầm giường", c: "A" }
     ];
 
-    // --- CẤU HÌNH GAME ---
     const config = {
         type: Phaser.AUTO,
         width: window.innerWidth,
         height: window.innerHeight,
         backgroundColor: '#34495e',
         physics: { default: 'arcade' },
-        scene: { create: create, update: update }
+        scene: { preload: preload, create: create, update: update }
     };
 
     let player, cursors, foods, dangers, lessons;
     const game = new Phaser.Game(config);
 
+    function preload() {
+        // --- GỌI ẢNH TỪ GITHUB CỦA BẠN ---
+        this.load.image('player', 'player.png');
+        this.load.image('food', 'food.png');
+        this.load.image('junk', 'junk.png');
+        this.load.image('book', 'book.png');
+    }
+
     function create() {
-        const self = this;
-        window.gameScene = this; // Lưu lại để dùng cho hàm trả lời câu hỏi
+        window.gameScene = this;
 
-        // 1. Tạo nhân vật (Đầu tròn thân vuông)
-        player = this.add.container(window.innerWidth / 2, window.innerHeight / 2);
-        let body = this.add.rectangle(0, 10, 40, 50, 0xff6b6b);
-        let head = this.add.circle(0, -25, 20, 0xffccaa);
-        player.add([body, head]);
-        this.physics.add.existing(player);
-        player.body.setCollideWorldBounds(true);
+        // 1. Nhân vật thực tế
+        player = this.physics.add.sprite(window.innerWidth/2, window.innerHeight/2, 'player');
+        player.setCollideWorldBounds(true);
+        player.setScale(0.8); // Chỉnh kích thước nhân vật nếu ảnh to quá
 
-        // 2. Tạo các nhóm vật phẩm
-        foods = this.physics.add.group();   // Xanh lá (Tốt)
-        dangers = this.physics.add.group(); // Đỏ (Xấu)
-        lessons = this.physics.add.group(); // Vàng (Học tập)
+        // 2. Nhóm vật phẩm thực tế
+        foods = this.physics.add.group();
+        dangers = this.physics.add.group();
+        lessons = this.physics.add.group();
 
-        const spawn = (group, color) => {
-            let item = this.add.circle(Phaser.Math.Between(50, window.innerWidth - 50), Phaser.Math.Between(50, window.innerHeight - 50), 15, color);
+        const spawn = (group, key) => {
+            let item = this.physics.add.sprite(Phaser.Math.Between(50, window.innerWidth-50), Phaser.Math.Between(50, window.innerHeight-50), key);
+            item.setScale(0.5); // Chỉnh kích thước vật phẩm
             group.add(item);
         };
 
-        // Rải hạt ban đầu
-        for (let i = 0; i < 4; i++) spawn(foods, 0x2ecc71);
-        for (let i = 0; i < 3; i++) spawn(dangers, 0xe74c3c);
-        spawn(lessons, 0xf1c40f);
+        for(let i=0; i<4; i++) spawn(foods, 'food');
+        for(let i=0; i<3; i++) spawn(dangers, 'junk');
+        spawn(lessons, 'book');
 
-        // 3. Xử lý va chạm
+        // 3. Va chạm
         this.physics.add.overlap(player, foods, (p, f) => {
-            f.destroy();
-            stats.hp = Math.min(100, stats.hp + 5);
-            updateUI();
-            spawn(foods, 0x2ecc71);
+            f.destroy(); stats.hp = Math.min(100, stats.hp+5); updateUI(); spawn(foods, 'food');
         });
 
         this.physics.add.overlap(player, dangers, (p, d) => {
-            d.destroy();
-            stats.hp -= 20;
-            this.cameras.main.shake(150, 0.01);
-            updateUI();
-            spawn(dangers, 0xe74c3c);
+            d.destroy(); stats.hp -= 20; this.cameras.main.shake(150, 0.01); updateUI(); spawn(dangers, 'junk');
         });
 
         this.physics.add.overlap(player, lessons, (p, l) => {
-            l.destroy();
-            this.scene.pause();
-            showQuiz();
+            l.destroy(); this.scene.pause(); showQuiz();
         });
 
         cursors = this.input.keyboard.createCursorKeys();
@@ -104,20 +94,12 @@
     function update() {
         if (!player.body) return;
         player.body.setVelocity(0);
-
         if (cursors.left.isDown) player.body.setVelocityX(-280);
         else if (cursors.right.isDown) player.body.setVelocityX(280);
-
         if (cursors.up.isDown) player.body.setVelocityY(-280);
         else if (cursors.down.isDown) player.body.setVelocityY(280);
-
-        if (stats.hp <= 0) {
-            alert("Bé kiệt sức rồi! Hãy ăn uống lành mạnh hơn.");
-            location.reload();
-        }
     }
 
-    // --- HÀM HỖ TRỢ GIAO DIỆN ---
     function updateUI() {
         document.getElementById('hp').innerText = stats.hp;
         document.getElementById('weight').innerText = stats.weight;
@@ -134,17 +116,11 @@
 
     window.handleAns = function(ans) {
         document.getElementById('quiz-box').style.display = 'none';
-        if (ans === currentQuiz.c) {
-            alert("✅ Tuyệt vời! Bé được +20 điểm Trí tuệ.");
-            stats.intel += 20;
-        } else {
-            alert("❌ Nguy hiểm quá! Bé bị trừ máu rồi.");
-            stats.hp -= 20;
-        }
+        if (ans === currentQuiz.c) { alert("✅ Bé giỏi quá! +20 điểm Trí tuệ."); stats.intel += 20; }
+        else { alert("❌ Nguy hiểm quá! Bé bị trừ máu rồi."); stats.hp -= 20; }
         updateUI();
-        
-        // Tạo lại hạt vàng và tiếp tục game
-        let l = window.gameScene.add.circle(Phaser.Math.Between(50, window.innerWidth-50), Phaser.Math.Between(50, window.innerHeight-50), 15, 0xf1c40f);
+        let l = window.gameScene.physics.add.sprite(Phaser.Math.Between(50, window.innerWidth-50), Phaser.Math.Between(50, window.innerHeight-50), 'book');
+        l.setScale(0.5);
         lessons.add(l);
         window.gameScene.scene.resume();
     };
