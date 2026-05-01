@@ -2,57 +2,84 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <title>Game Sinh Ton - Fix Lỗi Trình Duyệt</title>
-    <!-- Tao dùng link dự phòng ổn định nhất -->
-    <script src="https://cloudflare.com"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bé Trưởng Thành - Game Sinh Tồn</title>
+    <!-- GỌI ĐÚNG FILE MÀY VỪA UP -->
+    <script src="phaser.min.js"></script>
     <style>
-        body { margin: 0; background: #1a1a1a; display: flex; align-items: center; justify-content: center; height: 100vh; overflow: hidden; }
-        #game-container { border: 5px solid #4ecdc4; }
+        body { margin: 0; background: #2c3e50; overflow: hidden; font-family: sans-serif; }
+        #ui { position: absolute; top: 10px; left: 10px; color: white; background: rgba(0,0,0,0.6); padding: 10px; border-radius: 8px; pointer-events: none; border: 1px solid #4ecdc4; }
     </style>
 </head>
 <body>
 
-    <div id="game-container"></div>
+    <div id="ui">
+        <div>❤️ HP: <span id="hp">100</span>%</div>
+        <div>⚖️ Cân nặng: <span id="weight">20</span>kg</div>
+        <div>🧠 Trí tuệ: <span id="intel">0</span></div>
+    </div>
 
 <script>
-    // Kiểm tra xem thư viện đã tải chưa
     window.onload = function() {
+        // Kiểm tra xem đã nhận thư viện chưa
         if (typeof Phaser === 'undefined') {
-            alert("Mạng của bạn chặn thư viện game rồi! Hãy thử dùng 4G.");
+            alert("Lỗi: Không tìm thấy file phaser.min.js. Mày kiểm tra lại GitHub nhé!");
             return;
         }
 
         const config = {
-            type: Phaser.CANVAS, // ÉP KIỂU CANVAS ĐỂ TRÁNH LỖI TRÌNH DUYỆT
-            parent: 'game-container',
-            width: 800,
-            height: 600,
-            backgroundColor: '#2c3e50',
+            type: Phaser.AUTO,
+            width: window.innerWidth,
+            height: window.innerHeight,
+            backgroundColor: '#34495e',
             physics: { default: 'arcade' },
             scene: { create: create, update: update }
         };
 
-        let player, cursors;
+        let player, cursors, foods;
+        let stats = { hp: 100, weight: 20, intel: 0 };
         const game = new Phaser.Game(config);
 
         function create() {
-            // Vẽ chữ và nhân vật ngay lập tức
-            this.add.text(20, 20, 'DA KET NOI THANH CONG!', { fontSize: '32px', fill: '#2ecc71' });
-            
-            player = this.add.rectangle(400, 300, 50, 50, 0xff6b6b);
+            // Nhân vật chính (Hình vuông hồng)
+            player = this.add.rectangle(window.innerWidth/2, window.innerHeight/2, 50, 50, 0xff6b6b);
             this.physics.add.existing(player);
             player.body.setCollideWorldBounds(true);
-            
+
+            // Tạo đồ ăn (Các vòng tròn xanh)
+            foods = this.physics.add.group();
+            for(let i=0; i<5; i++) {
+                let x = Phaser.Math.Between(50, window.innerWidth-50);
+                let y = Phaser.Math.Between(50, window.innerHeight-50);
+                let f = this.add.circle(x, y, 15, 0x2ecc71);
+                foods.add(f);
+            }
+
+            // Va chạm: Ăn đồ ăn
+            this.physics.add.overlap(player, foods, (p, f) => {
+                f.x = Phaser.Math.Between(50, window.innerWidth-50);
+                f.y = Phaser.Math.Between(50, window.innerHeight-50);
+                stats.hp = Math.min(100, stats.hp + 2);
+                stats.weight += 0.1;
+                updateUI();
+            });
+
             cursors = this.input.keyboard.createCursorKeys();
+            this.add.text(window.innerWidth/2, 30, 'Dùng phím mũi tên để di chuyển', { fill: '#fff' }).setOrigin(0.5);
         }
 
         function update() {
-            if (!player.body) return;
             player.body.setVelocity(0);
-            if (cursors.left.isDown) player.body.setVelocityX(-300);
-            if (cursors.right.isDown) player.body.setVelocityX(300);
-            if (cursors.up.isDown) player.body.setVelocityY(-300);
-            if (cursors.down.isDown) player.body.setVelocityY(300);
+            if (cursors.left.isDown) player.body.setVelocityX(-250);
+            else if (cursors.right.isDown) player.body.setVelocityX(250);
+            if (cursors.up.isDown) player.body.setVelocityY(-250);
+            else if (cursors.down.isDown) player.body.setVelocityY(250);
+        }
+
+        function updateUI() {
+            document.getElementById('hp').innerText = stats.hp;
+            document.getElementById('weight').innerText = stats.weight.toFixed(1);
+            document.getElementById('intel').innerText = stats.intel;
         }
     };
 </script>
