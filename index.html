@@ -3,12 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Bé Trưởng Thành - Bản Hoàn Thiện Siêu Cấp</title>
-    <script src="https://cloudflare.com"></script>
+    <title>Bé Trưởng Thành - Sinh Tồn Học Đường</title>
+    <!-- GỌI FILE NỘI BỘ MÀY ĐÃ UP - CHỐNG ĐEN MÀN HÌNH -->
+    <script src="phaser.min.js"></script>
     <style>
         body { margin: 0; background: #000; overflow: hidden; font-family: 'Segoe UI', sans-serif; touch-action: none; }
-        
-        /* Giao diện chỉ số */
         #status-bar {
             position: absolute; top: 10px; left: 50%; transform: translateX(-50%);
             width: 90%; max-width: 450px; background: rgba(255, 255, 255, 0.95);
@@ -17,16 +16,12 @@
         }
         .stat-box { text-align: center; color: #333; font-weight: bold; font-size: 13px; }
         .stat-val { color: #ff6b6b; font-size: 17px; display: block; }
-
-        /* Bảng câu hỏi */
         #quiz-box {
             display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
             background: white; padding: 25px; border-radius: 25px; border: 6px solid #f1c40f;
             width: 85%; max-width: 380px; text-align: center; z-index: 1000;
         }
         .ans-btn { width: 100%; padding: 15px; margin: 8px 0; border: none; border-radius: 12px; cursor: pointer; font-weight: bold; color: white; font-size: 16px; }
-
-        /* Controller cho Mobile */
         #mobile-controls { position: absolute; bottom: 20px; left: 20px; display: grid; grid-template-columns: 60px 60px 60px; gap: 10px; z-index: 50; }
         .joy-btn { width: 60px; height: 60px; background: rgba(255,255,255,0.4); border: 2px solid #fff; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 25px; color: #fff; user-select: none; }
     </style>
@@ -35,7 +30,7 @@
 
     <div id="status-bar">
         <div class="stat-box">❤️ MÁU <span id="hp" class="stat-val">100</span></div>
-        <div class="stat-box">⚖️ CÂN NẶNG <span id="weight" class="stat-val">20</span></div>
+        <div class="stat-box">⚖️ CÂN <span id="weight" class="stat-val">20</span></div>
         <div class="stat-box">🧠 TRÍ TUỆ <span id="intel" class="stat-val">0</span></div>
     </div>
 
@@ -54,7 +49,6 @@
     </div>
 
 <script>
-    // --- KHAI BÁO BIẾN TOÀN CỤC ---
     let gameState = { hp: 100, weight: 20, intel: 0, moveDir: null };
     let currentQuizData = null;
     let phaserScene = null;
@@ -62,11 +56,10 @@
 
     const quizList = [
         { q: "Khi thấy khói trong nhà con làm gì?", a: "Bịt mũi, bò thấp", b: "Nấp dưới gầm giường", c: "A" },
-        { q: "Người lạ cho kẹo ở cổng trường?", a: "Nhận kẹo ngay", b: "Lịch sự từ chối", c: "B" },
-        { q: "Lạc mẹ ở siêu thị con tìm ai?", a: "Chạy ra ngoài cửa tìm", b: "Tìm chú bảo vệ/nhân viên", c: "B" }
+        { q: "Người lạ cho kẹo ở cổng trường?", a: "Nhận kẹo ngay", b: "Từ chối lịch sự", c: "B" },
+        { q: "Lạc mẹ ở siêu thị con tìm ai?", a: "Chạy ra cửa tìm", b: "Tìm chú bảo vệ", c: "B" }
     ];
 
-    // --- CẤU HÌNH PHASER ---
     const config = {
         type: Phaser.AUTO,
         width: window.innerWidth,
@@ -78,6 +71,7 @@
     const game = new Phaser.Game(config);
 
     function preload() {
+        // Link ảnh dự phòng 100% hiện
         this.load.image('bg', 'https://ibb.co');
         this.load.image('player', 'https://ibb.co');
         this.load.image('apple', 'https://ibb.co');
@@ -87,40 +81,34 @@
 
     function create() {
         phaserScene = this;
-
-        // Nền
         let bg = this.add.image(window.innerWidth/2, window.innerHeight/2, 'bg');
         bg.setScale(Math.max(window.innerWidth/bg.width, window.innerHeight/bg.height));
 
-        // Nhân vật
         player = this.physics.add.sprite(window.innerWidth/2, window.innerHeight/2, 'player');
-        player.setCollideWorldBounds(true).setScale(0.15).setDepth(10);
+        player.setCollideWorldBounds(true).setScale(0.18).setDepth(10);
 
-        // Nhóm vật phẩm
         const foods = this.physics.add.group();
         const dangers = this.physics.add.group();
         lessonsGroup = this.physics.add.group();
 
         const spawnItem = (group, key, sc) => {
-            let x = Phaser.Math.Between(50, window.innerWidth - 50);
-            let y = Phaser.Math.Between(150, window.innerHeight - 50);
-            let item = this.physics.add.sprite(x, y, key).setScale(sc);
+            let item = this.physics.add.sprite(Phaser.Math.Between(50, window.innerWidth-50), Phaser.Math.Between(150, window.innerHeight-50), key);
+            item.setScale(sc);
             group.add(item);
         };
 
-        for(let i=0; i<3; i++) spawnItem(foods, 'apple', 0.2);
-        for(let i=0; i<2; i++) spawnItem(dangers, 'junk', 0.3);
-        spawnItem(lessonsGroup, 'book', 0.2);
+        for(let i=0; i<3; i++) spawnItem(foods, 'apple', 0.25);
+        for(let i=0; i<2; i++) spawnItem(dangers, 'junk', 0.4);
+        spawnItem(lessonsGroup, 'book', 0.25);
 
-        // Xử lý va chạm
         this.physics.add.overlap(player, foods, (p, f) => {
             f.destroy(); gameState.hp = Math.min(100, gameState.hp + 5); 
-            updateUI(); spawnItem(foods, 'apple', 0.2);
+            updateUI(); spawnItem(foods, 'apple', 0.25);
         });
 
         this.physics.add.overlap(player, dangers, (p, d) => {
             d.destroy(); gameState.hp -= 20; this.cameras.main.shake(100, 0.01); 
-            updateUI(); spawnItem(dangers, 'junk', 0.3);
+            updateUI(); spawnItem(dangers, 'junk', 0.4);
         });
 
         this.physics.add.overlap(player, lessonsGroup, (p, l) => {
@@ -135,15 +123,12 @@
     function update() {
         if (!player || !player.body) return;
         player.body.setVelocity(0);
-
         if (this.cursors.left.isDown || gameState.moveDir === 'left') { player.setVelocityX(-260); player.setFlipX(true); }
         else if (this.cursors.right.isDown || gameState.moveDir === 'right') { player.setVelocityX(260); player.setFlipX(false); }
-        
         if (this.cursors.up.isDown || gameState.moveDir === 'up') player.setVelocityY(-260);
         else if (this.cursors.down.isDown || gameState.moveDir === 'down') player.setVelocityY(260);
     }
 
-    // --- HÀM ĐIỀU KHIỂN ---
     window.setMove = (dir) => { gameState.moveDir = dir; };
 
     function openQuiz() {
@@ -156,21 +141,11 @@
 
     window.submitAnswer = function(ans) {
         document.getElementById('quiz-box').style.display = 'none';
-        if (ans === currentQuizData.c) {
-            alert("🌟 CHÍNH XÁC! Bé giỏi quá.");
-            gameState.intel += 20;
-        } else {
-            alert("❌ SAI RỒI! Bé cần cẩn thận hơn.");
-            gameState.hp -= 20;
-        }
+        if (ans === currentQuizData.c) { alert("🌟 ĐÚNG RỒI! Bé giỏi quá."); gameState.intel += 20; }
+        else { alert("❌ SAI RỒI! Bé bị trừ máu."); gameState.hp -= 20; }
         updateUI();
-        
-        // Tạo lại sách và Resume game an toàn
-        let x = Phaser.Math.Between(50, window.innerWidth - 50);
-        let y = Phaser.Math.Between(150, window.innerHeight - 50);
-        let newBook = phaserScene.physics.add.sprite(x, y, 'book').setScale(0.2);
-        lessonsGroup.add(newBook);
-        
+        let l = phaserScene.physics.add.sprite(Phaser.Math.Between(50, window.innerWidth-50), Phaser.Math.Between(150, window.innerHeight-50), 'book').setScale(0.25);
+        lessonsGroup.add(l);
         phaserScene.scene.resume();
     }
 
@@ -178,7 +153,7 @@
         document.getElementById('hp').innerText = gameState.hp;
         document.getElementById('weight').innerText = gameState.weight;
         document.getElementById('intel').innerText = gameState.intel;
-        if (gameState.hp <= 0) { alert("Bé đã kiệt sức!"); location.reload(); }
+        if (gameState.hp <= 0) { alert("Bé kiệt sức!"); location.reload(); }
     }
 </script>
 </body>
