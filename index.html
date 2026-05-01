@@ -2,31 +2,26 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bé Trưởng Thành - Game Sinh Tồn</title>
-    <!-- GỌI ĐÚNG FILE MÀY VỪA UP -->
+    <title>Bé Tập Sinh Tồn - Level 1</title>
     <script src="phaser.min.js"></script>
     <style>
-        body { margin: 0; background: #2c3e50; overflow: hidden; font-family: sans-serif; }
-        #ui { position: absolute; top: 10px; left: 10px; color: white; background: rgba(0,0,0,0.6); padding: 10px; border-radius: 8px; pointer-events: none; border: 1px solid #4ecdc4; }
+        body { margin: 0; background: #2c3e50; overflow: hidden; font-family: 'Segoe UI', sans-serif; }
+        #ui { position: absolute; top: 15px; left: 15px; color: white; background: rgba(0,0,0,0.7); padding: 15px; border-radius: 10px; border: 2px solid #4ecdc4; pointer-events: none; }
+        .stat { font-size: 18px; margin: 5px 0; font-weight: bold; }
     </style>
 </head>
 <body>
 
     <div id="ui">
-        <div>❤️ HP: <span id="hp">100</span>%</div>
-        <div>⚖️ Cân nặng: <span id="weight">20</span>kg</div>
-        <div>🧠 Trí tuệ: <span id="intel">0</span></div>
+        <div class="stat">❤️ Sức khỏe: <span id="hp">100</span>%</div>
+        <div class="stat">⚖️ Cân nặng: <span id="weight">20</span>kg</div>
+        <div class="stat">🧠 Trí tuệ: <span id="intel">0</span></div>
+        <hr>
+        <div style="color: #4ecdc4; font-size: 14px;">Nhiệm vụ: Ăn hạt Xanh (Tốt) <br> Tránh hạt Đỏ (Xấu)</div>
     </div>
 
 <script>
     window.onload = function() {
-        // Kiểm tra xem đã nhận thư viện chưa
-        if (typeof Phaser === 'undefined') {
-            alert("Lỗi: Không tìm thấy file phaser.min.js. Mày kiểm tra lại GitHub nhé!");
-            return;
-        }
-
         const config = {
             type: Phaser.AUTO,
             width: window.innerWidth,
@@ -36,36 +31,59 @@
             scene: { create: create, update: update }
         };
 
-        let player, cursors, foods;
+        let player, head, cursors, foods, dangers;
         let stats = { hp: 100, weight: 20, intel: 0 };
         const game = new Phaser.Game(config);
 
         function create() {
-            // Nhân vật chính (Hình vuông hồng)
-            player = this.add.rectangle(window.innerWidth/2, window.innerHeight/2, 50, 50, 0xff6b6b);
+            // 1. Tạo "Bé nhân vật" (Thân vuông + Đầu tròn)
+            player = this.add.container(window.innerWidth/2, window.innerHeight/2);
+            let body = this.add.rectangle(0, 10, 40, 50, 0xff6b6b); // Thân
+            let face = this.add.circle(0, -25, 20, 0xffccaa); // Đầu
+            player.add([body, face]);
+            
             this.physics.add.existing(player);
             player.body.setCollideWorldBounds(true);
+            player.body.setSize(40, 70); // Kích thước va chạm
 
-            // Tạo đồ ăn (Các vòng tròn xanh)
+            // 2. Tạo nhóm đồ ăn TỐT (Xanh lá)
             foods = this.physics.add.group();
             for(let i=0; i<5; i++) {
-                let x = Phaser.Math.Between(50, window.innerWidth-50);
-                let y = Phaser.Math.Between(50, window.innerHeight-50);
-                let f = this.add.circle(x, y, 15, 0x2ecc71);
-                foods.add(f);
+                spawnItem(foods, 0x2ecc71, this);
             }
 
-            // Va chạm: Ăn đồ ăn
+            // 3. Tạo nhóm đồ ăn XẤU (Đỏ - như Gà rán/Snack quá nhiều)
+            dangers = this.physics.add.group();
+            for(let i=0; i<3; i++) {
+                spawnItem(dangers, 0xe74c3c, this);
+            }
+
+            // Xử lý va chạm
             this.physics.add.overlap(player, foods, (p, f) => {
-                f.x = Phaser.Math.Between(50, window.innerWidth-50);
-                f.y = Phaser.Math.Between(50, window.innerHeight-50);
-                stats.hp = Math.min(100, stats.hp + 2);
+                f.destroy();
+                stats.hp = Math.min(100, stats.hp + 5);
                 stats.weight += 0.1;
                 updateUI();
+                spawnItem(foods, 0x2ecc71, this);
+            });
+
+            this.physics.add.overlap(player, dangers, (p, d) => {
+                d.destroy();
+                stats.hp -= 15;
+                stats.weight += 1.5; // Ăn đồ xấu tăng cân rất nhanh
+                this.cameras.main.shake(100, 0.01);
+                updateUI();
+                spawnItem(dangers, 0xe74c3c, this);
             });
 
             cursors = this.input.keyboard.createCursorKeys();
-            this.add.text(window.innerWidth/2, 30, 'Dùng phím mũi tên để di chuyển', { fill: '#fff' }).setOrigin(0.5);
+        }
+
+        function spawnItem(group, color, scene) {
+            let x = Phaser.Math.Between(50, window.innerWidth-50);
+            let y = Phaser.Math.Between(50, window.innerHeight-50);
+            let item = scene.add.circle(x, y, 15, color);
+            group.add(item);
         }
 
         function update() {
@@ -74,6 +92,11 @@
             else if (cursors.right.isDown) player.body.setVelocityX(250);
             if (cursors.up.isDown) player.body.setVelocityY(-250);
             else if (cursors.down.isDown) player.body.setVelocityY(250);
+
+            if (stats.hp <= 0) {
+                alert("Bé mệt quá rồi! Hãy chọn đồ ăn lành mạnh (màu xanh) nhé.");
+                location.reload();
+            }
         }
 
         function updateUI() {
