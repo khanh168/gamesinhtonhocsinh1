@@ -2,151 +2,51 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bé Trưởng Thành - Survival Game 2D</title>
-    <!-- Thư viện game chuyên nghiệp -->
-    <script src="https://cloudflare.com"></script>
+    <title>Game Sinh Ton Noi Bo</title>
+    <!-- Gọi file phaser bạn vừa up lên GitHub -->
+    <script src="phaser.min.js"></script>
     <style>
-        body { margin: 0; padding: 0; background: #2c3e50; font-family: Arial, sans-serif; overflow: hidden; }
-        #game-container { display: flex; justify-content: center; align-items: center; height: 100vh; }
-        .ui-panel {
-            position: absolute; top: 10px; left: 10px; background: rgba(0,0,0,0.7);
-            color: white; padding: 15px; border-radius: 10px; pointer-events: none;
-            border: 2px solid #4ecdc4;
-        }
-        .stat-bar { font-size: 18px; margin-bottom: 5px; font-weight: bold; }
-        .instruction {
-            position: absolute; bottom: 20px; width: 100%; text-align: center;
-            color: white; font-size: 16px; text-shadow: 2px 2px #000;
-        }
+        body { margin: 0; background: #2c3e50; overflow: hidden; display: flex; justify-content: center; align-items: center; height: 100vh; }
+        #status { color: white; position: absolute; top: 10px; font-family: sans-serif; }
     </style>
 </head>
 <body>
-
-    <div id="game-container"></div>
-
-    <!-- Giao diện chỉ số (UI) đè lên game -->
-    <div class="ui-panel">
-        <div class="stat-bar">❤️ Sức khỏe: <span id="hp">100</span>%</div>
-        <div class="stat-bar">⚖️ Cân nặng: <span id="weight">20</span>kg</div>
-        <div class="stat-bar">🧠 Trí tuệ: <span id="intel">0</span></div>
-        <div class="stat-bar">💰 Tiền: <span id="money">50</span>đ</div>
-    </div>
-
-    <div class="instruction">Dùng phím mũi tên để di chuyển | Chạm vào Táo để ăn, Tránh vật cản</div>
-
+    <div id="status">Nếu hiện hình vuông đỏ là thành công!</div>
 <script>
-    // Cấu hình game
-    const config = {
-        type: Phaser.AUTO,
-        parent: 'game-container',
-        width: 800,
-        height: 600,
-        backgroundColor: '#34495e',
-        physics: {
-            default: 'arcade',
-            arcade: { gravity: { y: 0 }, debug: false }
-        },
-        scene: { preload: preload, create: create, update: update }
+    window.onload = function() {
+        if (typeof Phaser === 'undefined') {
+            document.getElementById('status').innerHTML = 'LỖI: File phaser.min.js chưa nằm cùng thư mục với index.html';
+            return;
+        }
+
+        const config = {
+            type: Phaser.AUTO,
+            width: 800, height: 600,
+            backgroundColor: '#34495e',
+            physics: { default: 'arcade' },
+            scene: { create: create, update: update }
+        };
+
+        let player, cursors;
+        new Phaser.Game(config);
+
+        function create() {
+            document.getElementById('status').innerHTML = 'DI CHUYỂN BẰNG PHÍM MŨI TÊN';
+            player = this.add.rectangle(400, 300, 60, 60, 0xff6b6b);
+            this.physics.add.existing(player);
+            player.body.setCollideWorldBounds(true);
+            cursors = this.input.keyboard.createCursorKeys();
+        }
+
+        function update() {
+            if (!player.body) return;
+            player.body.setVelocity(0);
+            if (cursors.left.isDown) player.body.setVelocityX(-300);
+            else if (cursors.right.isDown) player.body.setVelocityX(300);
+            if (cursors.up.isDown) player.body.setVelocityY(-300);
+            else if (cursors.down.isDown) player.body.setVelocityY(300);
+        }
     };
-
-    let player;
-    let cursors;
-    let items;
-    let obstacles;
-    
-    // Dữ liệu nhân vật
-    let stats = {
-        hp: 100,
-        weight: 20,
-        intel: 0,
-        money: 50
-    };
-
-    const game = new Phaser.Game(config);
-
-    function preload() {
-        // Load ảnh từ server Phaser (Nếu mạng lỗi ảnh sẽ hiện ô vuông, nhưng game vẫn chạy)
-        this.load.image('apple', 'https://phaser.io');
-        this.load.image('danger', 'https://phaser.io');
-    }
-
-    function create() {
-        // 1. Tạo nhân vật (Dùng hình vuông màu sắc nếu ảnh không load được)
-        player = this.add.rectangle(400, 300, 40, 40, 0xff6b6b);
-        this.physics.add.existing(player);
-        player.body.setCollideWorldBounds(true);
-
-        // 2. Tạo nhóm đồ ăn (Táo)
-        items = this.physics.add.group();
-        for (let i = 0; i < 5; i++) {
-            let x = Phaser.Math.Between(50, 750);
-            let y = Phaser.Math.Between(50, 550);
-            let item = items.create(x, y, 'apple');
-            // Nếu ảnh lỗi, vẽ hình tròn xanh lá thay thế
-            if (!item.texture.key) {
-                this.add.circle(x, y, 15, 0x2ecc71);
-            }
-        }
-
-        // 3. Tạo vật cản (Nguy hiểm)
-        obstacles = this.physics.add.group();
-        for (let i = 0; i < 3; i++) {
-            let x = Phaser.Math.Between(50, 750);
-            let y = Phaser.Math.Between(50, 550);
-            obstacles.create(x, y, 'danger');
-        }
-
-        // 4. Xử lý va chạm
-        this.physics.add.overlap(player, items, collectFood, null, this);
-        this.physics.add.overlap(player, obstacles, hitObstacle, null, this);
-
-        // 5. Điều khiển
-        cursors = this.input.keyboard.createCursorKeys();
-    }
-
-    function update() {
-        player.body.setVelocity(0);
-
-        if (cursors.left.isDown) player.body.setVelocityX(-200);
-        else if (cursors.right.isDown) player.body.setVelocityX(200);
-
-        if (cursors.up.isDown) player.body.setVelocityY(-200);
-        else if (cursors.down.isDown) player.body.setVelocityY(200);
-    }
-
-    function collectFood(player, food) {
-        food.destroy(); // Biến mất khi ăn
-        stats.hp = Math.min(stats.hp + 5, 100);
-        stats.weight += 0.2;
-        updateUI();
-        
-        // Tạo lại thức ăn mới ở chỗ khác
-        let x = Phaser.Math.Between(50, 750);
-        let y = Phaser.Math.Between(50, 550);
-        items.create(x, y, 'apple');
-    }
-
-    function hitObstacle(player, obstacle) {
-        obstacle.destroy();
-        stats.hp -= 20;
-        updateUI();
-        
-        // Hiệu ứng nháy đỏ khi bị thương
-        this.cameras.main.shake(200, 0.01);
-        
-        if (stats.hp <= 0) {
-            alert("Bé kiệt sức rồi! Hãy thử lại nhé.");
-            window.location.reload();
-        }
-    }
-
-    function updateUI() {
-        document.getElementById('hp').innerText = stats.hp;
-        document.getElementById('weight').innerText = stats.weight.toFixed(1);
-        document.getElementById('intel').innerText = stats.intel;
-        document.getElementById('money').innerText = stats.money;
-    }
 </script>
 </body>
 </html>
