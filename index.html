@@ -83,35 +83,47 @@
     function create() {
         scene = this;
 
-        // 1. Thêm nền Sân Trường (Co giãn vừa màn hình)
+        // 1. Thêm nền Sân Trường
         let bg = this.add.image(window.innerWidth/2, window.innerHeight/2, 'bg');
         let scaleX = window.innerWidth / bg.width;
         let scaleY = window.innerHeight / bg.height;
         let scale = Math.max(scaleX, scaleY);
         bg.setScale(scale).setScrollFactor(0);
 
-        // 2. Nhân vật chính
+        // 2. Nhân vật chính (CHỈNH NHỎ LẠI Ở ĐÂY)
         player = this.physics.add.sprite(window.innerWidth/2, window.innerHeight/2, 'player');
-        player.setCollideWorldBounds(true).setScale(0.5).setDepth(5);
+        // Tao giảm từ 0.5 xuống 0.2, nếu vẫn to mày sửa thành 0.1 nhé
+        player.setCollideWorldBounds(true).setScale(0.2).setDepth(5);
 
         // 3. Các vật phẩm
         const foods = this.physics.add.group();
         const dangers = this.physics.add.group();
         const lessons = this.physics.add.group();
 
-        const spawn = (group, key, scale) => {
-            let item = this.physics.add.sprite(Phaser.Math.Between(100, window.innerWidth-100), Phaser.Math.Between(150, window.innerHeight-100), key);
-            item.setScale(scale).setDepth(4);
+        // Hàm tạo vật phẩm với tỉ lệ riêng từng loại
+        const spawn = (group, key) => {
+            let item = this.physics.add.sprite(
+                Phaser.Math.Between(100, window.innerWidth-100), 
+                Phaser.Math.Between(150, window.innerHeight-100), 
+                key
+            );
+            
+            // CHỈNH KÍCH THƯỚC RIÊNG TỪNG MÓN Ở ĐÂY
+            if (key === 'apple') item.setScale(0.15); // Quả táo nhỏ lại cho xinh
+            if (key === 'junk') item.setScale(0.25);  // Đùi gà vừa phải
+            if (key === 'book') item.setScale(0.15);  // Quyển sách
+            
+            item.setDepth(4);
             group.add(item);
         };
 
-        for(let i=0; i<3; i++) spawn(foods, 'apple', 0.4);
-        for(let i=0; i<2; i++) spawn(dangers, 'junk', 0.6);
-        spawn(lessons, 'book', 0.4);
+        for(let i=0; i<3; i++) spawn(foods, 'apple');
+        for(let i=0; i<2; i++) spawn(dangers, 'junk');
+        spawn(lessons, 'book');
 
-        // Va chạm
-        this.physics.add.overlap(player, foods, (p, f) => { f.destroy(); stats.hp = Math.min(100, stats.hp+5); updateUI(); spawn(foods, 'apple', 0.4); });
-        this.physics.add.overlap(player, dangers, (p, d) => { d.destroy(); stats.hp -= 20; this.cameras.main.shake(150, 0.01); updateUI(); spawn(dangers, 'junk', 0.6); });
+        // ... các phần overlap giữ nguyên ...
+        this.physics.add.overlap(player, foods, (p, f) => { f.destroy(); stats.hp = Math.min(100, stats.hp+5); updateUI(); spawn(foods, 'apple'); });
+        this.physics.add.overlap(player, dangers, (p, d) => { d.destroy(); stats.hp -= 20; this.cameras.main.shake(150, 0.01); updateUI(); spawn(dangers, 'junk'); });
         this.physics.add.overlap(player, lessons, (p, l) => { l.destroy(); this.scene.pause(); showQuiz(); });
 
         this.cursors = this.input.keyboard.createCursorKeys();
